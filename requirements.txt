@@ -1,8 +1,2 @@
 selenium
-undetected-chromedriver
-requests
-2captcha-python
-undetected-chromedriver
-fake_useragent
-chromedriver_autoinstaller
-twocaptcha_extension_python
+DrissionPage==4.0.5.6

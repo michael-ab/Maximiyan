@@ -55,6 +55,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the Selenium script into the container
 COPY script.py /app/script.py
 COPY config.py /app/config.py
+COPY CloudflareBypasser.py /app/CloudflareBypasser.py
+
+RUN ls -l /app
 
 # Expose the display port (for debugging with GUI)
 ENV DISPLAY=:99

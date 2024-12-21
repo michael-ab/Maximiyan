@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  container_1:
+    build: .
+    container_name: container_1
+    environment:
+      - DISPLAY=192.168.100.1:0
+    shm_size: "2g"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: ["python", "script.py"]
+
+  container_2:
+    build: .
+    container_name: container_2
+    environment:
+      - DISPLAY=192.168.100.1:0
+    shm_size: "2g"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: ["python", "script.py"]
+
+  container_3:
+    build: .
+    container_name: container_3
+    environment:
+      - DISPLAY=192.168.100.1:0
+    shm_size: "2g"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: ["python", "script.py"]

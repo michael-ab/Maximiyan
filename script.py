@@ -1,198 +1,198 @@
+import os
 import time
-import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-import requests
-from fake_useragent import UserAgent
-from config import API_KEY, users
+import logging
+from CloudflareBypasser import CloudflareBypasser
+from DrissionPage import ChromiumPage, ChromiumOptions
+from config import users
 
-def solve_turnstile_captcha(sitekey, page_url, action, data, pagedata):
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('cloudflare_bypass.log', mode='w')
+    ]
+)
+
+def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
     """
-    Solve Turnstile CAPTCHA using 2Captcha API.
+    Configures and returns Chromium options.
+
+    :param browser_path: Path to the Chromium browser executable.
+    :param arguments: List of arguments for the Chromium browser.
+    :return: Configured ChromiumOptions instance.
     """
-    try:
-        print("Sending Turnstile CAPTCHA to 2Captcha...")
-        create_task_payload = {
-            "clientKey": API_KEY,
-            "task": {
-                "type": "TurnstileTaskProxyless",
-                "websiteURL": page_url,
-                "websiteKey": sitekey,
-                "action": action,
-                "data": data,
-                "pagedata": pagedata,
-                "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-            },
-        }
-        response = requests.post("https://api.2captcha.com/createTask", json=create_task_payload)
-        response_data = response.json()
+    options = ChromiumOptions()
+    options.set_argument("--remote-debugging-port=9222")
+    options.set_argument("--no-sandbox")
+    options.set_argument("--disable-dev-shm-usage")
+    options.set_argument('--auto-open-devtools-for-tabs', 'true')
+    options.set_argument("--window-size=1200,1000")
+    options.set_paths(browser_path=browser_path)
+    for argument in arguments:
+        options.set_argument(argument)
+    return options
 
-        if response_data.get("errorId") == 0:
-            task_id = response_data.get("taskId")
-            print(f"CAPTCHA task created successfully. Task ID: {task_id}")
-        else:
-            error_message = response_data.get("errorDescription", "Unknown error")
-            raise Exception(f"Error creating CAPTCHA task: {error_message}")
+def buy_tickets(driver):
+    # Navigate to the PSG ticket purchase page
+    driver.get("https://billetterie.psg.fr/fr/catalogue/match-foot-masculin-paris-vs-saint-etienne")
+    print("Navigating to the PSG ticket page...")
 
-        # Poll for the solution
-        solution_payload = {"clientKey": API_KEY, "taskId": task_id}
-        start_time = time.time()
 
-        timeout = 120  # seconds
-        while time.time() - start_time < timeout:
-            time.sleep(5)
-            solution_response = requests.post("https://api.2captcha.com/getTaskResult", json=solution_payload)
-            solution_data = solution_response.json()
+    # Wait for the button to be visible and clickable, then click it
+    button = driver.ele("xpath://div[@data-component='Actions']//button[contains(., 'Acheter mes billets')]")
 
-            if solution_data.get("errorId") == 0:
-                if solution_data.get("status") == "ready":
-                    print("CAPTCHA Solved Successfully!")
-                    return solution_data.get("solution", {}).get("token")
-            else:
-                error_message = solution_data.get("errorDescription", "Unknown error")
-                raise Exception(f"Error fetching CAPTCHA solution: {error_message}")
+    if button:
+        button.click()
+        print("Clicked on the 'Acheter mes billets...' button.")
+    else:
+        print("Could not find the 'Acheter mes billets...' button.")
 
-            print("Solution not ready yet. Retrying...")
+    # Locate and click the "Réserver" button
+    reserve_button = driver.ele("xpath://span[@class='gridrow:1/-1@0-639px psgMatchPrdAvailCta']//span[contains(text(), 'Réserver')]")
 
-        raise TimeoutError("CAPTCHA solving timed out.")
+    if reserve_button:
+        reserve_button.click()
+        print("Clicked on the 'Réserver' button.")
+    else:
+        print("Could not find the 'Réserver' button.")
 
-    except Exception as e:
-        print(f"Error solving CAPTCHA: {e}")
-        return None
+    # Locate and click the "Achat rapide" link
+    fast_buy_link = driver.ele("xpath://a[contains(@href, '/fr/acheter/billet-a-l-unite-grand-public-paris-vs-saint-etienne-2024-2ni6izyw3ir8/list')]")
 
-def login_session(email, password):
+    if fast_buy_link:
+        fast_buy_link.click()
+        print("Clicked on the 'Achat rapide' link.")
+    else:
+        print("Could not find the 'Achat rapide' link.")
+
+    # Locate all the buttons with the class 'dropdownArrows' and click each one
+    buttons = driver.eles("xpath://button[contains(@class, 'dropdownArrows')]")
+    if buttons:
+        for i, button in enumerate(buttons):
+            try:
+                button.click()
+                # Locate the first button with class 'qtyButtonIncrement' and click it twice
+                increment_button = driver.ele("xpath://button[contains(@class, 'qtyButtonIncrement')]")
+                if increment_button:
+                    increment_button.click()  # Click once
+                    print("Clicked the increment button once.")
+                    increment_button.click()  # Click again
+                    print("Clicked the increment button again.")
+                    break
+                else:
+                    print("Could not find the increment button.")
+            except Exception as e:
+                print(f"Error clicking button {i+1}: {e}")
+    else:
+        print("No buttons found.")
+
+    # Locate and click the "Ajouter au panier" button
+    add_to_cart_button = driver.ele("xpath://button[span/span[text()='Ajouter au panier']]")
+
+    if add_to_cart_button:
+        add_to_cart_button.click()
+        print("Clicked on the 'Ajouter au panier' button.")
+    else:
+        print("Could not find the 'Ajouter au panier' button.")
+
+    # Wait for dynamic content to load
+    time.sleep(2000)
+
+def login_session(driver, email, password):
     """
     Handles a single login session in an isolated browser window.
     """
-    driver = None
+    # Handle cookies
     try:
-        # Use undetected-chromedriver
-        options = uc.ChromeOptions()
-        ua = UserAgent()
-        user_agent = ua.random
-        options.add_argument(f"user-agent={user_agent}")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--start-maximized")
-        options.add_argument("--disable-extensions")
-
-        # Set proxy
-        # options.add_argument(f"--proxy-server={PROXY}")
-
-        driver = uc.Chrome(options=options)
-        url = "https://auth.billetterie.psg.fr/fr/login"
-
-        # Open the login page
-        driver.get(url)
-
-        # Inject JavaScript to capture Turnstile parameters
-        injection_script = """
-        const i = setInterval(() => {
-            if (window.turnstile) {
-                clearInterval(i);
-                window.turnstile.render = (a, b) => {
-                    const params = {
-                        action: b.action,
-                        data: b.cData,
-                        pagedata: b.chlPageData
-                    };
-                    console.log("Turnstile Parameters:", JSON.stringify(params));
-                    window.extractedTurnstileParams = params; // Expose params globally
-                    return "foo";
-                };
-            }
-        }, 10);
-        """
-        driver.execute_script(injection_script)
-
-        # Wait for Turnstile parameters to be captured
-        time.sleep(5)
-
-        params = driver.execute_script("return window.extractedTurnstileParams || null;")
-
-        if not params:
-            print(f"[{email}] Failed to extract Turnstile parameters.")
-            return
-        print(f"[{email}] Extracted Turnstile Parameters: {params}")
-
-        # Solve the CAPTCHA using extracted parameters
-        captcha_token = solve_turnstile_captcha(
-            sitekey="0x4AAAAAAADnPIDROrmt1Wwj",
-            page_url=url,
-            action=params.get("action"),
-            data=params.get("data"),
-            pagedata=params.get("pagedata"),
-        )
-
-        if captcha_token:
-            # Inject the CAPTCHA solution into the hidden input field
-            try:
-                captcha_element = WebDriverWait(driver, 15).until(
-                    EC.presence_of_element_located((By.ID, "cf-turnstile-response"))
-                )
-                driver.execute_script(
-                    f'document.getElementById("cf-turnstile-response").value="{captcha_token}";'
-                )
-                print(f"[{email}] Successfully solved CAPTCHA.")
-            except Exception as e:
-                print(f"[{email}] Failed to inject CAPTCHA token: {e}")
-
-        # Handle cookies
-        try:
-            agree_button = WebDriverWait(driver, 15).until(
-                EC.element_to_be_clickable((By.ID, "didomi-notice-agree-button"))
-            )
+        agree_button = driver.ele('@id:didomi-notice-agree-button')
+        if agree_button:
             agree_button.click()
             print(f"[{email}] Clicked on 'Agree and close' button.")
-        except Exception as e:
-            print(f"[{email}] Failed to locate or click 'Agree and close' button: {e}")
+        else:
+            print(f"[{email}] 'Agree and close' button not found.")
+    except Exception as e:
+        print(f"[{email}] Failed to locate or click 'Agree and close' button: {e}")
 
-        # Enter email and password
-        try:
-            email_field = WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.ID, "user_login_identifier"))
-            )
-            email_field.send_keys(email)
+    # Enter email and password
+    try:
+        email_field = driver.ele('@id:user_login_identifier')
+        if email_field:
+            email_field.input(email)
 
-            password_field = WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.ID, "user_login_password"))
-            )
-            password_field.send_keys(password)
-            print(f"[{email}] Entered email and password.")
-        except Exception as e:
-            print(f"[{email}] Failed to enter email or password: {e}")
+        password_field = driver.ele('@id:user_login_password')
+        if password_field:
+            password_field.input(password)
+        print(f"[{email}] Entered email and password.")
+    except Exception as e:
+        print(f"[{email}] Failed to enter email or password: {e}")
 
-        # Click the "Me connecter" button
-        try:
-            login_button = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//button[@type='submit' and .//span[text()='Me connecter']]")
-                )
-            )
+    # Click the "Me connecter" button using XPath
+    try:
+        login_button = driver.ele("xpath://button[@type='submit']//span[text()='Me connecter']", timeout=10)
+        if login_button:
             login_button.click()
             print(f"[{email}] Clicked on 'Me connecter' button.")
-        except Exception as e:
-            print(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
+        else:
+            print(f"[{email}] 'Me connecter' button not found.")
+    except Exception as e:
+        print(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
 
-        # Optional wait to observe actions
-        time.sleep(5)
+def main():
+    # Chromium Browser Path
+    isHeadless = os.getenv('HEADLESS', 'false').lower() == 'true'
 
-        # Take a screenshot for debugging
-        driver.save_screenshot(f"debug_screenshot_{email}.png")
-        print(f"[{email}] Screenshot saved.")
+    if isHeadless:
+        from pyvirtualdisplay import Display
+
+        display = Display(visible=0, size=(1920, 1080))
+        display.start()
+
+    browser_path = os.getenv('CHROME_PATH', "/usr/bin/google-chrome")
+
+    # Arguments to make the browser better for automation and less detectable.
+    arguments = [
+        "-no-first-run",
+        "-force-color-profile=srgb",
+        "-metrics-recording-only",
+        "-password-store=basic",
+        "-use-mock-keychain",
+        "-export-tagged-pdf",
+        "-no-default-browser-check",
+        "-disable-background-mode",
+        "-enable-features=NetworkService,NetworkServiceInProcess,LoadCryptoTokenExtension,PermuteTLSExtensions",
+        "-disable-features=FlashDeprecationWarning,EnablePasswordsAccountStorage",
+        "-deny-permission-prompts",
+        "-disable-gpu",
+        "-accept-lang=en-US",
+    ]
+
+    options = get_chromium_options(browser_path, arguments)
+
+    # Initialize the browser
+    driver = ChromiumPage(addr_or_opts=options)
+    try:
+        logging.info('Navigating to the demo page.')
+        driver.get('https://auth.billetterie.psg.fr/fr/login')
+
+        # Where the bypass starts
+        logging.info('Starting Cloudflare bypass.')
+        cf_bypasser = CloudflareBypasser(driver)
+
+        cf_bypasser.bypass()
+
+        for user in users:
+            login_session(driver, user["email"], user["password"])
+            buy_tickets(driver)
 
     except Exception as e:
-        print(f"[{email}] Encountered an error: {e}")
-
+        logging.error("An error occurred: %s", str(e))
     finally:
-        if driver:
-            driver.quit()
+        logging.info('Closing the browser.')
+        driver.quit()
+        if isHeadless:
+            display.stop()
 
-if __name__ == "__main__":
-    for user in users:
-        login_session(user["email"], user["password"])
-    print("All sessions completed.")
+if __name__ == '__main__':
+    main()
