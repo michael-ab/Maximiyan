@@ -4,7 +4,8 @@ import time
 import logging
 from CloudflareBypasser import CloudflareBypasser
 from DrissionPage import ChromiumPage, ChromiumOptions
-from config import users
+from config import users, pushbullet_key
+import requests
 
 # Configure logging
 logging.basicConfig(
@@ -15,6 +16,32 @@ logging.basicConfig(
         logging.FileHandler('cloudflare_bypass.log', mode='w')
     ]
 )
+
+def send_pushbullet_notification(api_key: str, body: str):
+    """
+    Sends a Pushbullet notification.
+
+    :param api_key: Your Pushbullet API access token.
+    :param title: Title of the notification.
+    :param body: Body content of the notification.
+    """
+    try:
+        url = "https://api.pushbullet.com/v2/pushes"
+        headers = {
+            "Access-Token": api_key,
+            "Content-Type": "application/json"
+        }
+        data = {
+            "type": "note",
+            "body": body
+        }
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code == 200:
+            logging.info("Success: Pushbullet notification sent.")
+        else:
+            logging.error(f"Failed to send Pushbullet notification. Status Code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        logging.error(f"Exception occurred while sending Pushbullet notification: {e}")
 
 def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
     """
@@ -42,7 +69,8 @@ def buy_tickets(driver):
 
     # Locate and click the "Achat rapide" link
     fast_buy_link = driver.ele("xpath://a[contains(@href, '/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/list')]")
-
+    body = "Ticket Purchase Successful"
+    send_pushbullet_notification(pushbullet_key, body)
     if fast_buy_link:
         fast_buy_link.click()
         print("Clicked on the 'Achat rapide' link.")
@@ -81,6 +109,9 @@ def buy_tickets(driver):
         print("Could not find the 'Ajouter au panier' button.")
 
     # Wait for dynamic content to load
+    subject = "Ticket Purchase Successful"
+    body = f"User {report_email} has successfully completed the ticket purchase."
+    send_email(subject, body)
     time.sleep(20000)
 
 def login_session(driver, email, password):
