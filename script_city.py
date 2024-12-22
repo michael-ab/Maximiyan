@@ -56,7 +56,7 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
     options.set_argument("--no-sandbox")
     options.set_argument("--disable-dev-shm-usage")
     options.set_argument('--auto-open-devtools-for-tabs', 'true')
-    options.set_argument("--window-size=1200,1000")
+    options.set_argument("--window-size=1200,800")
     options.set_paths(browser_path=browser_path)
     for argument in arguments:
         options.set_argument(argument)
@@ -76,6 +76,9 @@ def buy_tickets(driver):
     else:
         print("Could not find the 'Achat rapide' link.")
         return
+
+    body = "Ticket Purchase Successful"
+    send_pushbullet_notification(pushbullet_key, body)
 
     # Locate all the buttons with the class 'dropdownArrows' and click each one
     buttons = driver.eles("xpath://button[contains(@class, 'dropdownArrows')]")
@@ -107,8 +110,6 @@ def buy_tickets(driver):
     else:
         print("Could not find the 'Ajouter au panier' button.")
 
-    body = "Ticket Purchase Successful"
-    send_pushbullet_notification(pushbullet_key, body)
     time.sleep(20000)
 
 def login_session(driver, email, password):
@@ -197,7 +198,7 @@ def main():
             login_session(driver, user["email"], user["password"])
             while True:
                 buy_tickets(driver)
-                time.sleep(random.randint(2,4))
+                time.sleep(random.randint(120,240))
 
     except Exception as e:
         logging.error("An error occurred: %s", str(e))
