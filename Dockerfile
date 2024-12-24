@@ -53,8 +53,8 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Selenium script into the container
-COPY script.py /app/script.py
-COPY config.py /app/config.py
+COPY script_city.py /app/script_city.py
+COPY config.xml /app/config.xml
 COPY CloudflareBypasser.py /app/CloudflareBypasser.py
 
 RUN ls -l /app
@@ -63,4 +63,4 @@ RUN ls -l /app
 ENV DISPLAY=:99
 
 # Run the script by default
-CMD ["python", "script.py"]
+CMD ["python", "script_city.py"]

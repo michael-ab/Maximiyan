@@ -4,8 +4,11 @@ import time
 import logging
 from CloudflareBypasser import CloudflareBypasser
 from DrissionPage import ChromiumPage, ChromiumOptions
-from config import users, pushbullet_key
 import requests
+import xml.etree.ElementTree as ET
+
+pushbullet_key = None
+users = []
 
 # Configure logging
 logging.basicConfig(
@@ -56,7 +59,7 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
     options.set_argument("--no-sandbox")
     options.set_argument("--disable-dev-shm-usage")
     options.set_argument('--auto-open-devtools-for-tabs', 'true')
-    options.set_argument("--window-size=1200,800")
+    options.set_argument("--window-size=1000,600")
     options.set_paths(browser_path=browser_path)
     for argument in arguments:
         options.set_argument(argument)
@@ -67,6 +70,11 @@ def buy_tickets(driver):
     driver.get("https://billetterie.psg.fr/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/")
     print("Navigating to the PSG ticket page...")
 
+    try:
+        cf_bypasser = CloudflareBypasser(driver)
+        cf_bypasser.bypass()
+    except e:
+        pass
     # Locate and click the "Achat rapide" link
     fast_buy_link = driver.ele("xpath://a[contains(@href, '/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/list')]")
 
@@ -151,7 +159,64 @@ def login_session(driver, email, password):
     except Exception as e:
         print(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
 
+def create_xml_config():
+    """
+    Prompts the user for configuration details and saves them in an XML file.
+    """
+    email = input("Enter your email: ")
+    password = input("Enter your password: ")
+    pushbullet_key = input("Enter your Pushbullet key: ")
+
+    # Create the root element
+    root = ET.Element("configuration")
+
+    # Add Pushbullet key
+    pushbullet_key_element = ET.SubElement(root, "pushbulletKey")
+    pushbullet_key_element.text = pushbullet_key
+
+    # Add users
+    users_element = ET.SubElement(root, "users")
+    user_element = ET.SubElement(users_element, "user")
+    email_element = ET.SubElement(user_element, "email")
+    email_element.text = email
+    password_element = ET.SubElement(user_element, "password")
+    password_element.text = password
+
+    # Write to config.xml
+    tree = ET.ElementTree(root)
+    with open("config.xml", "wb") as config_file:
+        tree.write(config_file, encoding="utf-8", xml_declaration=True)
+
+    print("Configuration saved to 'config.xml'!")
+
+def load_config(file_path: str):
+    """
+    Loads configuration from an XML file.
+
+    :param file_path: Path to the XML configuration file.
+    :return: A dictionary with users and the Pushbullet key.
+    """
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+
+        # Extract Pushbullet key
+        pushbullet_key = root.find('pushbulletKey').text
+
+        # Extract users
+        for user in root.find('users'):
+            email = user.find('email').text
+            password = user.find('password').text
+            users.append({"email": email, "password": password})
+
+        return {"pushbullet_key": pushbullet_key, "users": users}
+    except Exception as e:
+        print(f"Error loading configuration: {e}")
+        raise
+
 def main():
+    create_xml_config()
+
     # Chromium Browser Path
     isHeadless = os.getenv('HEADLESS', 'false').lower() == 'true'
 
@@ -194,7 +259,16 @@ def main():
 
         cf_bypasser.bypass()
 
+        config = load_config('config.xml')
+        users = config["users"]
+        pushbullet_key = config["pushbullet_key"]
+        print(f"Loaded users: {users}")
+        print(f"Loaded Pushbullet key: {pushbullet_key}")
+
         for user in users:
+            body = "Create Bot for email " + user["email"]
+            send_pushbullet_notification(pushbullet_key, body)
+
             login_session(driver, user["email"], user["password"])
             while True:
                 buy_tickets(driver)
