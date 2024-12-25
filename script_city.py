@@ -69,7 +69,7 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
 def buy_tickets(driver):
     # Navigate to the PSG ticket purchase page
     driver.get("https://billetterie.psg.fr/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/")
-    print("Navigating to the PSG ticket page...")
+    logging.info("Navigating to the PSG ticket page...")
 
     try:
         cf_bypasser = CloudflareBypasser(driver)
@@ -82,9 +82,9 @@ def buy_tickets(driver):
 
     if fast_buy_link:
         fast_buy_link.click()
-        print("Clicked on the 'Achat rapide' link.")
+        logging.info("Clicked on the 'Achat rapide' link.")
     else:
-        print("Could not find the 'Achat rapide' link.")
+        logging.error("Could not find the 'Achat rapide' link.")
         return
 
     body = "Ticket Purchase Successful"
@@ -100,25 +100,25 @@ def buy_tickets(driver):
                 increment_button = driver.ele("xpath://button[contains(@class, 'qtyButtonIncrement')]")
                 if increment_button:
                     increment_button.click()  # Click once
-                    print("Clicked the increment button once.")
+                    logging.info("Clicked the increment button once.")
                     increment_button.click()  # Click again
-                    print("Clicked the increment button again.")
+                    logging.info("Clicked the increment button again.")
                     break
                 else:
-                    print("Could not find the increment button.")
+                    logging.error("Could not find the increment button.")
             except Exception as e:
-                print(f"Error clicking button {i+1}: {e}")
+                logging.error(f"Error clicking button {i+1}: {e}")
     else:
-        print("No buttons found.")
+        logging.error("No buttons found.")
 
     # Locate and click the "Ajouter au panier" button
     add_to_cart_button = driver.ele("xpath://button[span/span[text()='Ajouter au panier']]")
 
     if add_to_cart_button:
         add_to_cart_button.click()
-        print("Clicked on the 'Ajouter au panier' button.")
+        logging.info("Clicked on the 'Ajouter au panier' button.")
     else:
-        print("Could not find the 'Ajouter au panier' button.")
+        logging.info("Could not find the 'Ajouter au panier' button.")
 
     time.sleep(20000)
 
@@ -131,11 +131,11 @@ def login_session(driver, email, password):
         agree_button = driver.ele('@id:didomi-notice-agree-button')
         if agree_button:
             agree_button.click()
-            print(f"[{email}] Clicked on 'Agree and close' button.")
+            logging.info(f"[{email}] Clicked on 'Agree and close' button.")
         else:
-            print(f"[{email}] 'Agree and close' button not found.")
+            logging.error(f"[{email}] 'Agree and close' button not found.")
     except Exception as e:
-        print(f"[{email}] Failed to locate or click 'Agree and close' button: {e}")
+        logging.error(f"[{email}] Failed to locate or click 'Agree and close' button: {e}")
 
     # Enter email and password
     try:
@@ -146,20 +146,20 @@ def login_session(driver, email, password):
         password_field = driver.ele('@id:user_login_password')
         if password_field:
             password_field.input(password)
-        print(f"[{email}] Entered email and password.")
+        logging.info(f"[{email}] Entered email and password.")
     except Exception as e:
-        print(f"[{email}] Failed to enter email or password: {e}")
+        logging.error(f"[{email}] Failed to enter email or password: {e}")
 
     # Click the "Me connecter" button using XPath
     try:
         login_button = driver.ele("xpath://button[@type='submit']//span[text()='Me connecter']", timeout=10)
         if login_button:
             login_button.click()
-            print(f"[{email}] Clicked on 'Me connecter' button.")
+            logging.info(f"[{email}] Clicked on 'Me connecter' button.")
         else:
-            print(f"[{email}] 'Me connecter' button not found.")
+            logging.error(f"[{email}] 'Me connecter' button not found.")
     except Exception as e:
-        print(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
+        logging.error(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
 
 def clean_input(input_str):
     """
@@ -221,7 +221,7 @@ def main():
 
         cf_bypasser.bypass()
 
-        print(f"Loaded Pushbullet key: {pushbullet_key}")
+        logging.info(f"Loaded Pushbullet key: {pushbullet_key}")
 
         body = "Create Bot for email " + email
         send_pushbullet_notification(pushbullet_key, body)
