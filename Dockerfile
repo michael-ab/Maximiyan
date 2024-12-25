@@ -43,24 +43,16 @@ RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1-
     chmod +x /usr/local/bin/chromedriver && \
     rm chromedriver_linux64.zip /tmp/LATEST_RELEASE
 
-# Install Playwright and browsers
-RUN pip install --no-cache-dir playwright && \
-    playwright install && \
-    playwright install-deps
-
-# Copy requirements and install Python dependencies
+# Install Python dependencies
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the Selenium script into the container
+# Copy the Selenium script and related files into the container
 COPY script_city.py /app/script_city.py
 COPY config.xml /app/config.xml
 COPY CloudflareBypasser.py /app/CloudflareBypasser.py
 
-RUN ls -l /app
-
 # Expose the display port (for debugging with GUI)
-ENV DISPLAY=:99
 
-# Run the script by default
-CMD ["python", "script_city.py"]
+# Set entrypoint to Python script
+ENTRYPOINT ["python", "/app/script_city.py"]
