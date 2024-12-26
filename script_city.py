@@ -77,6 +77,8 @@ def buy_tickets(driver):
     except e:
         pass
 
+    time.sleep(2)
+
     # Locate and click the "Achat rapide" link
     fast_buy_link = driver.ele("xpath://a[contains(@href, '/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/list')]")
 
@@ -195,7 +197,7 @@ def main():
         "-no-first-run",
         "-force-color-profile=srgb",
         "-metrics-recording-only",
-        "-password-store=basic",
+        "-password-store=basic",  # Prevents saving passwords
         "-use-mock-keychain",
         "-export-tagged-pdf",
         "-no-default-browser-check",
@@ -205,6 +207,18 @@ def main():
         "-deny-permission-prompts",
         "-disable-gpu",
         "-accept-lang=en-US",
+        "--disable-extensions",
+        "--disable-popup-blocking",
+        "--disable-sync",
+        "--disable-background-networking",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-breakpad",
+        "--enable-low-res-tiling",
+        "--force-fieldtrials=*MemoryLess/lowMemoryMode/",
+        "--disable-font-subpixel-positioning",
+        "--window-size=800,500",
+        "--incognito",
     ]
 
     options = get_chromium_options(browser_path, arguments)

@@ -9,7 +9,7 @@ services:
       - EMAIL=${CONTAINER1_EMAIL}
       - PASSWORD=${CONTAINER1_PASSWORD}
       - PUSHPULLET_KEY=${CONTAINER1_PUSHBULLET_KEY}
-    shm_size: "1g"  # Reduce shared memory usage
+    shm_size: "2g"  # Reduce shared memory usage
     deploy:
       resources:
         limits:
@@ -27,7 +27,7 @@ services:
       - EMAIL=${CONTAINER2_EMAIL}
       - PASSWORD=${CONTAINER2_PASSWORD}
       - PUSHPULLET_KEY=${CONTAINER2_PUSHBULLET_KEY}
-    shm_size: "1g"
+    shm_size: "2g"
     deploy:
       resources:
         limits:
