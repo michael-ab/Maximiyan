@@ -9,7 +9,7 @@ services:
     shm_size: "2g"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ["python", "script.py"]
+    command: ["python", "script_om.py"]
 
   container_2:
     build: .
@@ -19,7 +19,7 @@ services:
     shm_size: "2g"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ["python", "script.py"]
+    command: ["python", "script_om.py"]
 
   container_3:
     build: .
@@ -29,4 +29,4 @@ services:
     shm_size: "2g"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ["python", "script.py"]
+    command: ["python", "script_om.py"]
