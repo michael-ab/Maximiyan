@@ -197,7 +197,7 @@ def main():
         "-no-first-run",
         "-force-color-profile=srgb",
         "-metrics-recording-only",
-        "-password-store=basic",  # Prevents saving passwords
+        "-password-store=basic",
         "-use-mock-keychain",
         "-export-tagged-pdf",
         "-no-default-browser-check",
