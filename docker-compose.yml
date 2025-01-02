@@ -5,28 +5,34 @@ services:
     build: .
     container_name: container_1
     environment:
-      - DISPLAY=192.168.100.1:0
-    shm_size: "2g"
+      - DISPLAY=host.docker.internal:0
+      - EMAIL=${CONTAINER1_EMAIL}
+      - PASSWORD=${CONTAINER1_PASSWORD}
+      - PUSHPULLET_KEY=${CONTAINER1_PUSHBULLET_KEY}
+    shm_size: "2g"  # Reduce shared memory usage
+    deploy:
+      resources:
+        limits:
+          memory: 1g  # Limit memory to 1 GB
+          cpus: "1"  # Limit CPU to half a core
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ["python", "script_om.py"]
+    command: ["--email", "${CONTAINER1_EMAIL}", "--password", "${CONTAINER1_PASSWORD}", "--pushbullet-key", "${CONTAINER1_PUSHBULLET_KEY}"]
 
   container_2:
     build: .
     container_name: container_2
     environment:
-      - DISPLAY=192.168.100.1:0
+      - DISPLAY=host.docker.internal:0
+      - EMAIL=${CONTAINER2_EMAIL}
+      - PASSWORD=${CONTAINER2_PASSWORD}
+      - PUSHPULLET_KEY=${CONTAINER2_PUSHBULLET_KEY}
     shm_size: "2g"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ["python", "script_om.py"]
-
-  container_3:
-    build: .
-    container_name: container_3
-    environment:
-      - DISPLAY=192.168.100.1:0
-    shm_size: "2g"
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    command: ["python", "script_om.py"]
+    command: ["--email", "${CONTAINER2_EMAIL}", "--password", "${CONTAINER2_PASSWORD}", "--pushbullet-key", "${CONTAINER2_PUSHBULLET_KEY}"]

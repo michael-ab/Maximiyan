@@ -6,6 +6,7 @@ from CloudflareBypasser import CloudflareBypasser
 from DrissionPage import ChromiumPage, ChromiumOptions
 import requests
 import xml.etree.ElementTree as ET
+import argparse
 
 pushbullet_key = None
 users = []
@@ -68,21 +69,24 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
 def buy_tickets(driver):
     # Navigate to the PSG ticket purchase page
     driver.get("https://billetterie.psg.fr/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/")
-    print("Navigating to the PSG ticket page...")
+    logging.info("Navigating to the PSG ticket page...")
 
     try:
         cf_bypasser = CloudflareBypasser(driver)
         cf_bypasser.bypass()
     except e:
         pass
+
+    time.sleep(2)
+
     # Locate and click the "Achat rapide" link
     fast_buy_link = driver.ele("xpath://a[contains(@href, '/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/list')]")
 
     if fast_buy_link:
         fast_buy_link.click()
-        print("Clicked on the 'Achat rapide' link.")
+        logging.info("Clicked on the 'Achat rapide' link.")
     else:
-        print("Could not find the 'Achat rapide' link.")
+        logging.error("Could not find the 'Achat rapide' link.")
         return
 
     body = "Ticket Purchase Successful"
@@ -98,25 +102,25 @@ def buy_tickets(driver):
                 increment_button = driver.ele("xpath://button[contains(@class, 'qtyButtonIncrement')]")
                 if increment_button:
                     increment_button.click()  # Click once
-                    print("Clicked the increment button once.")
+                    logging.info("Clicked the increment button once.")
                     increment_button.click()  # Click again
-                    print("Clicked the increment button again.")
+                    logging.info("Clicked the increment button again.")
                     break
                 else:
-                    print("Could not find the increment button.")
+                    logging.error("Could not find the increment button.")
             except Exception as e:
-                print(f"Error clicking button {i+1}: {e}")
+                logging.error(f"Error clicking button {i+1}: {e}")
     else:
-        print("No buttons found.")
+        logging.error("No buttons found.")
 
     # Locate and click the "Ajouter au panier" button
     add_to_cart_button = driver.ele("xpath://button[span/span[text()='Ajouter au panier']]")
 
     if add_to_cart_button:
         add_to_cart_button.click()
-        print("Clicked on the 'Ajouter au panier' button.")
+        logging.info("Clicked on the 'Ajouter au panier' button.")
     else:
-        print("Could not find the 'Ajouter au panier' button.")
+        logging.info("Could not find the 'Ajouter au panier' button.")
 
     time.sleep(20000)
 
@@ -129,11 +133,11 @@ def login_session(driver, email, password):
         agree_button = driver.ele('@id:didomi-notice-agree-button')
         if agree_button:
             agree_button.click()
-            print(f"[{email}] Clicked on 'Agree and close' button.")
+            logging.info(f"[{email}] Clicked on 'Agree and close' button.")
         else:
-            print(f"[{email}] 'Agree and close' button not found.")
+            logging.error(f"[{email}] 'Agree and close' button not found.")
     except Exception as e:
-        print(f"[{email}] Failed to locate or click 'Agree and close' button: {e}")
+        logging.error(f"[{email}] Failed to locate or click 'Agree and close' button: {e}")
 
     # Enter email and password
     try:
@@ -144,78 +148,38 @@ def login_session(driver, email, password):
         password_field = driver.ele('@id:user_login_password')
         if password_field:
             password_field.input(password)
-        print(f"[{email}] Entered email and password.")
+        logging.info(f"[{email}] Entered email and password.")
     except Exception as e:
-        print(f"[{email}] Failed to enter email or password: {e}")
+        logging.error(f"[{email}] Failed to enter email or password: {e}")
 
     # Click the "Me connecter" button using XPath
     try:
         login_button = driver.ele("xpath://button[@type='submit']//span[text()='Me connecter']", timeout=10)
         if login_button:
             login_button.click()
-            print(f"[{email}] Clicked on 'Me connecter' button.")
+            logging.info(f"[{email}] Clicked on 'Me connecter' button.")
         else:
-            print(f"[{email}] 'Me connecter' button not found.")
+            logging.error(f"[{email}] 'Me connecter' button not found.")
     except Exception as e:
-        print(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
+        logging.error(f"[{email}] Failed to locate or click 'Me connecter' button: {e}")
 
-def create_xml_config():
+def clean_input(input_str):
     """
-    Prompts the user for configuration details and saves them in an XML file.
+    Removes unintended escape characters (like backslashes) from input strings.
     """
-    email = input("Enter your email: ")
-    password = input("Enter your password: ")
-    pushbullet_key = input("Enter your Pushbullet key: ")
-
-    # Create the root element
-    root = ET.Element("configuration")
-
-    # Add Pushbullet key
-    pushbullet_key_element = ET.SubElement(root, "pushbulletKey")
-    pushbullet_key_element.text = pushbullet_key
-
-    # Add users
-    users_element = ET.SubElement(root, "users")
-    user_element = ET.SubElement(users_element, "user")
-    email_element = ET.SubElement(user_element, "email")
-    email_element.text = email
-    password_element = ET.SubElement(user_element, "password")
-    password_element.text = password
-
-    # Write to config.xml
-    tree = ET.ElementTree(root)
-    with open("config.xml", "wb") as config_file:
-        tree.write(config_file, encoding="utf-8", xml_declaration=True)
-
-    print("Configuration saved to 'config.xml'!")
-
-def load_config(file_path: str):
-    """
-    Loads configuration from an XML file.
-
-    :param file_path: Path to the XML configuration file.
-    :return: A dictionary with users and the Pushbullet key.
-    """
-    try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-
-        # Extract Pushbullet key
-        pushbullet_key = root.find('pushbulletKey').text
-
-        # Extract users
-        for user in root.find('users'):
-            email = user.find('email').text
-            password = user.find('password').text
-            users.append({"email": email, "password": password})
-
-        return {"pushbullet_key": pushbullet_key, "users": users}
-    except Exception as e:
-        print(f"Error loading configuration: {e}")
-        raise
+    return input_str.replace("\\", "")
 
 def main():
-    create_xml_config()
+    parser = argparse.ArgumentParser(description="Cloudflare bypass and ticket purchase bot.")
+    parser.add_argument('--email', type=str, required=True, help="User email address for login.")
+    parser.add_argument('--password', type=str, required=True, help="User password for login.")
+    parser.add_argument('--pushbullet-key', type=str, required=True, help="Pushbullet API key for notifications.")
+
+    args = parser.parse_args()
+
+    pushbullet_key = clean_input(args.pushbullet_key)
+    email = clean_input(args.email)
+    password = clean_input(args.password)
 
     # Chromium Browser Path
     isHeadless = os.getenv('HEADLESS', 'false').lower() == 'true'
@@ -243,6 +207,18 @@ def main():
         "-deny-permission-prompts",
         "-disable-gpu",
         "-accept-lang=en-US",
+        "--disable-extensions",
+        "--disable-popup-blocking",
+        "--disable-sync",
+        "--disable-background-networking",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-breakpad",
+        "--enable-low-res-tiling",
+        "--force-fieldtrials=*MemoryLess/lowMemoryMode/",
+        "--disable-font-subpixel-positioning",
+        "--window-size=800,500",
+        "--incognito",
     ]
 
     options = get_chromium_options(browser_path, arguments)
@@ -259,20 +235,15 @@ def main():
 
         cf_bypasser.bypass()
 
-        config = load_config('config.xml')
-        users = config["users"]
-        pushbullet_key = config["pushbullet_key"]
-        print(f"Loaded users: {users}")
-        print(f"Loaded Pushbullet key: {pushbullet_key}")
+        logging.info(f"Loaded Pushbullet key: {pushbullet_key}")
 
-        for user in users:
-            body = "Create Bot for email " + user["email"]
-            send_pushbullet_notification(pushbullet_key, body)
+        body = "Create Bot for email " + email
+        send_pushbullet_notification(pushbullet_key, body)
 
-            login_session(driver, user["email"], user["password"])
-            while True:
-                buy_tickets(driver)
-                time.sleep(random.randint(120,240))
+        login_session(driver, email, password)
+        while True:
+            buy_tickets(driver)
+            time.sleep(random.randint(120,240))
 
     except Exception as e:
         logging.error("An error occurred: %s", str(e))
