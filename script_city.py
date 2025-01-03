@@ -9,7 +9,6 @@ import xml.etree.ElementTree as ET
 import argparse
 
 pushbullet_key = None
-users = []
 
 # Configure logging
 logging.basicConfig(
@@ -67,6 +66,8 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
     return options
 
 def buy_tickets(driver):
+    global pushbullet_key
+
     # Navigate to the PSG ticket purchase page
     driver.get("https://billetterie.psg.fr/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/")
     logging.info("Navigating to the PSG ticket page...")
@@ -77,10 +78,10 @@ def buy_tickets(driver):
     except e:
         pass
 
-    time.sleep(2)
-
     # Locate and click the "Achat rapide" link
-    fast_buy_link = driver.ele("xpath://a[contains(@href, '/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-manchester-city-2024-zd5w3rgn7obm/list')]")
+    fast_buy_link = driver.ele(
+        "xpath://a[contains(@class, 'bookingCatFastBuyLnk')]//span[contains(text(), 'Achat rapide')]"
+    , timeout=10)
 
     if fast_buy_link:
         fast_buy_link.click()
@@ -116,11 +117,14 @@ def buy_tickets(driver):
     # Locate and click the "Ajouter au panier" button
     add_to_cart_button = driver.ele("xpath://button[span/span[text()='Ajouter au panier']]")
 
-    if add_to_cart_button:
-        add_to_cart_button.click()
-        logging.info("Clicked on the 'Ajouter au panier' button.")
-    else:
-        logging.info("Could not find the 'Ajouter au panier' button.")
+    try:
+        if add_to_cart_button:
+            add_to_cart_button.click()
+            logging.info("Clicked on the 'Ajouter au panier' button.")
+        else:
+            logging.info("Could not find the 'Ajouter au panier' button.")
+    except Exception as e:
+        logging.error(f"Error clicking button 'Ajouter au panier'")
 
     time.sleep(20000)
 
@@ -170,6 +174,8 @@ def clean_input(input_str):
     return input_str.replace("\\", "")
 
 def main():
+    global pushbullet_key
+
     parser = argparse.ArgumentParser(description="Cloudflare bypass and ticket purchase bot.")
     parser.add_argument('--email', type=str, required=True, help="User email address for login.")
     parser.add_argument('--password', type=str, required=True, help="User password for login.")

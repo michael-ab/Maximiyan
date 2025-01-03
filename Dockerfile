@@ -48,11 +48,9 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Selenium script into the container
-COPY script_om.py /app/script_om.py
+COPY script_city.py /app/script_city.py
 COPY config.xml /app/config.xml
 COPY CloudflareBypasser.py /app/CloudflareBypasser.py
 
-# Expose the display port (for debugging with GUI)
-
-# Run the script by default
-CMD ["python", "/app/script_om.py"]
+# Set entrypoint to Python script
+ENTRYPOINT ["python", "/app/script_city.py"]

@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import argparse
 
 pushbullet_key = None
-
+email = None
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -54,12 +54,14 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
     :param arguments: List of arguments for the Chromium browser.
     :return: Configured ChromiumOptions instance.
     """
+    global email
     options = ChromiumOptions()
     options.set_argument("--remote-debugging-port=9222")
     options.set_argument("--no-sandbox")
     options.set_argument("--disable-dev-shm-usage")
     options.set_argument('--auto-open-devtools-for-tabs', 'true')
     options.set_argument("--window-size=800,500")
+    # options.set_argument(f"--app=data:,email:{email}")
     options.set_paths(browser_path=browser_path)
     for argument in arguments:
         options.set_argument(argument)
@@ -68,7 +70,7 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
 def buy_tickets(driver):
     global pushbullet_key
     # Navigate to the PSG ticket purchase page
-    driver.get("https://billetterie.psg.fr/fr/catalogue/match-foot-masculin-paris-vs-saint-etienne/")
+    driver.get("https://billetterie.psg.fr/fr/catalogue/match-foot-masculin-paris-vs-marseille-2/")
     logging.info("Navigating to the PSG ticket page...")
 
     try:
@@ -90,7 +92,7 @@ def buy_tickets(driver):
 
     # Locate and click the "Réserver" button
     reserve_button = driver.ele(
-        "xpath://li[.//span[contains(text(), 'Grand Public')]]//span[contains(text(), 'Réserver')]"
+        "xpath://li[.//span[contains(text(), 'Rouge et Bleu')]]//span[contains(text(), 'Réserver')]"
     , timeout=10)
 
     if reserve_button:
@@ -99,7 +101,7 @@ def buy_tickets(driver):
     else:
         logging.info("Could not find the 'Reserver' button.")
         return
-
+    time.sleep(20000)
     body = "Ticket Purchase Successful"
     send_pushbullet_notification(pushbullet_key, body)
 
@@ -194,6 +196,7 @@ def clean_input(input_str):
 
 def main():
     global pushbullet_key
+    global email
     parser = argparse.ArgumentParser(description="Cloudflare bypass and ticket purchase bot.")
     parser.add_argument('--email', type=str, required=True, help="User email address for login.")
     parser.add_argument('--password', type=str, required=True, help="User password for login.")
