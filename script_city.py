@@ -90,9 +90,6 @@ def buy_tickets(driver):
         logging.error("Could not find the 'Achat rapide' link.")
         return
 
-    body = "Ticket Purchase Successful"
-    send_pushbullet_notification(pushbullet_key, body)
-
     # Locate all the buttons with the class 'dropdownArrows' and click each one
     buttons = driver.eles("xpath://button[contains(@class, 'dropdownArrows')]")
     if buttons:
@@ -106,11 +103,18 @@ def buy_tickets(driver):
                     logging.info("Clicked the increment button once.")
                     increment_button.click()  # Click again
                     logging.info("Clicked the increment button again.")
+
+                    body = "Ticket Purchase Successful"
+                    send_pushbullet_notification(pushbullet_key, body)
                     break
                 else:
                     logging.error("Could not find the increment button.")
+                    if i >= 7:
+                        return
             except Exception as e:
                 logging.error(f"Error clicking button {i+1}: {e}")
+                if i >= 7:
+                    return
     else:
         logging.error("No buttons found.")
 

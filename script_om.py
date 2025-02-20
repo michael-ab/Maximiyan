@@ -70,7 +70,7 @@ def get_chromium_options(browser_path: str, arguments: list) -> ChromiumOptions:
 def buy_tickets(driver):
     global pushbullet_key
     # Navigate to the PSG ticket purchase page
-    driver.get("https://billetterie.psg.fr/fr/catalogue/match-foot-masculin-paris-vs-marseille-2/")
+    driver.get("https://billetterie.psg.fr/fr/catalogue/match-foot-masculin-paris-vs-1-8-ucl")
     logging.info("Navigating to the PSG ticket page...")
 
     try:
