@@ -69,7 +69,7 @@ def buy_tickets(driver):
     global pushbullet_key
 
     # Navigate to the PSG ticket purchase page
-    driver.get("https://billetterie.psg.fr/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-1-8-ucl-2024-zcpj3h0l42hw")
+    driver.get("https://billetterie.psg.fr/fr/acheter/billet-a-l-unite-rouge-et-bleu-paris-vs-marseille-2024-a20ttvhrsqfq/plan#bkd70d3f61-zone")
     logging.info("Navigating to the PSG ticket page...")
 
     try:
@@ -109,11 +109,11 @@ def buy_tickets(driver):
                     break
                 else:
                     logging.error("Could not find the increment button.")
-                    if i >= 12:
+                    if i >= 8:
                         return
             except Exception as e:
                 logging.error(f"Error clicking button {i+1}: {e}")
-                if i >= 12:
+                if i >= 8:
                         return
     else:
         logging.error("No buttons found.")
@@ -254,7 +254,7 @@ def main():
         login_session(driver, email, password)
         while True:
             buy_tickets(driver)
-            time.sleep(random.randint(60,120))
+            time.sleep(random.randint(100,180))
 
     except Exception as e:
         logging.error("An error occurred: %s", str(e))

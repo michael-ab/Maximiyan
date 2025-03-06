@@ -37,20 +37,20 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     command: ["--email", "${CONTAINER2_EMAIL}", "--password", "${CONTAINER2_PASSWORD}", "--pushbullet-key", "${CONTAINER2_PUSHBULLET_KEY}"]
 
-  # container_3:
-  #   build: .
-  #   container_name: container_3
-  #   environment:
-  #     - DISPLAY=host.docker.internal:0
-  #     - EMAIL=${CONTAINER3_EMAIL}
-  #     - PASSWORD=${CONTAINER3_PASSWORD}
-  #     - PUSHPULLET_KEY=${CONTAINER3_PUSHBULLET_KEY}
-  #   shm_size: "2g"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 2g
-  #         cpus: "2"
-  #   volumes:
-  #     - /tmp/.X11-unix:/tmp/.X11-unix
-  #   command: ["--email", "${CONTAINER3_EMAIL}", "--password", "${CONTAINER3_PASSWORD}", "--pushbullet-key", "${CONTAINER3_PUSHBULLET_KEY}"]
+  container_3:
+    build: .
+    container_name: container_3
+    environment:
+      - DISPLAY=host.docker.internal:0
+      - EMAIL=${CONTAINER3_EMAIL}
+      - PASSWORD=${CONTAINER3_PASSWORD}
+      - PUSHPULLET_KEY=${CONTAINER3_PUSHBULLET_KEY}
+    shm_size: "2g"
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: ["--email", "${CONTAINER3_EMAIL}", "--password", "${CONTAINER3_PASSWORD}", "--pushbullet-key", "${CONTAINER3_PUSHBULLET_KEY}"]
