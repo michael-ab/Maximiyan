@@ -254,7 +254,7 @@ def main():
         login_session(driver, email, password)
         while True:
             buy_tickets(driver)
-            time.sleep(random.randint(100,180))
+            time.sleep(random.randint(120,180))
 
     except Exception as e:
         logging.error("An error occurred: %s", str(e))
